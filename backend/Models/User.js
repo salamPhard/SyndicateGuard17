@@ -26,6 +26,12 @@ const userSchema = new mongoose.Schema({
     unique: true
   },
 
+  role: {
+        type: String,
+        required: true,
+        enum: ['admin', 'user']
+    },
+
   isactive: {
     type: Boolean,
     default: true
@@ -36,5 +42,9 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 },
 );
+
+userSchema.pre(/^find/, async function () {
+    this.find({ isactive: true });
+});
 
 module.exports = mongoose.model('User', userSchema);
