@@ -49,24 +49,25 @@ const register = async (req, res) => {
   }
 };
 
+//Login for user
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    // BUG: missing fields should return 400, not 401
+
+    //Checks if email and password are provided
     if (!email || !password) {
-      return res.status(401).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // NOTE: .select("+password") has no effect because password isn't select:false in the schema
-    const user = await User.findOne({ email }).select("+password");
-
-    // SECURITY: different messages for "no user" vs "wrong password" reveal which emails are registered
+    //Checks if user exists
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: "User doesnt exist" });
+      return res.status(401).json({ message: "User does not exist" });
     }
+    //Checks if password is valid
     const isvalidpassword = await bcrypt.compare(password, user.password);
     if (!isvalidpassword) {
-      return res.status(401).json({ message: "Password is incorrect " });
+      return res.status(401).json({ message: "Invalid password" });
     }
 
     //JWT
@@ -75,11 +76,10 @@ const login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1h" },
     );
-    // BUG: successful login should return 200, not 201
-    res.status(201).json({ message: "Login successful", token });
+    
+    res.status(200).json({ message: "Login successful", token });
   } catch (error) {
-    // BUG: server errors should return 500, not 401
-    return res.status(401).json({ error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
