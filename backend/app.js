@@ -2,6 +2,8 @@ const express = require("express");
 
 const userRoute = require("./Routes/userRoute");
 
+const superUser = require("./Controllers/users")
+
 const path = require("path");
 
 const app = express();
@@ -17,7 +19,7 @@ const PORT = process.env.PORT || 5000;
 
 // BUG: connectDB() isn't awaited, so the server starts listening before MongoDB connects
 const connectDB = require("./Config/dbConfig");
-connectDB(); //connect to MongoDB
+connectDB(superUser.superUser()); //connect to MongoDB
 
 // NOTE: leftover static route; the uploads folder doesn't exist
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
