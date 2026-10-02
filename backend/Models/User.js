@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      select :false
       // BUG: password has no select:false, so the bcrypt hash is returned in every response
     },
 
@@ -34,6 +35,12 @@ const userSchema = new mongoose.Schema(
       default: 'user'
     },
 
+    package: {
+    type: String,
+    enum: ['free', 'pro', 'enterprise'],
+    default: 'free'
+},
+
     isactive: {
       type: Boolean,
       default: true,
@@ -45,9 +52,5 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-// BUG: this hook hides deactivated users from ALL find queries (admin can't see them, re-registration crashes on duplicate email)
-userSchema.pre(/^find/, async function () {
-  this.find({ isactive: true });
-});
 
 module.exports = mongoose.model("User", userSchema);

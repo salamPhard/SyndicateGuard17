@@ -33,17 +33,29 @@ const superUser = async () =>{
 
 const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-    // TODO: no validation of email format or password length
-
-    // SECURITY: role comes from the request body, so anyone can register as admin; hard-code 'user' instead
+    const { name, email, password} = req.body;
+    
     if (!name || !email || !password ) {
       return res
         .status(400)
         .json({ message: "All fields are required" });
     }
 
-    const existingUser = await User.findOne({ email });
+    //Validate email format
+    const emailValidation = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!emailValidation.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    //Validate password length
+    if (password.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters long" });
+    }
+
+    const existingUser = await User.findOne({ email : cleanEmail });
     if (existingUser) {
       return res.status(409).json({ message: "User already exists" });
     }
@@ -52,12 +64,12 @@ const register = async (req, res) => {
 
     const apiKey = crypto.randomBytes(24).toString("hex");
 
-    // BUG: won't find a deactivated user because of the pre-find hook, so create() fails with duplicate key → 500
+    
     const user = await User.create({
       name,
-      email,
+      email: cleanEmail,
       password: hashedPassword,
-      role: role,
+      role: "user", // Default role to 'user' if not provided
       apiKey,
     });
 
@@ -87,8 +99,10 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
+     const cleanEmail = email.toLowerCase().trim();
+
     //Checks if user exists
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email : cleanEmail, isactive: true }).select("+password");
     if (!user) {
       return res.status(401).json({ message: "User does not exist" });
     }

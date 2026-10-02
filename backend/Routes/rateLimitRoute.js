@@ -4,6 +4,7 @@ const router = express.Router();
 const rateLimitService = require('../Services/rateLimitService');
 const { protect } = require('../Middleware/auth');
 const { authRoles } = require('../Middleware/roles');
+const rateLimiter = require('../Middleware/rateLimiter');
 
 const adminOnly = [protect, authRoles('admin')];
 
@@ -25,6 +26,14 @@ const sendError = (res, error) => {
 		message: statusCode === 500 ? 'An unexpected error occurred.' : error.message,
 	});
 };
+
+//Test Endpoint to check if rate limiting is working
+
+router.get('/test', protect, rateLimiter, (req, res) => {
+    res.status(200).json({
+        message: 'Request successful'
+    });
+});
 
 router.post('/', ...adminOnly, async (req, res) => {
 	try {

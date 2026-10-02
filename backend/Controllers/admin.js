@@ -115,6 +115,21 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+exports.deactivateUser = async (req, res) => {
+  try {
+    const {id} = req.params;
+    if(!id) {
+      return res.status(400).json({ message: "You need to enter user id" });
+    }
+
+    //find user and update isactive to false
+    const deactivatedUser = await User.findByIdAndUpdate(id, {isactive: false}, {new: true, runValidators: true}).select('-password');
+    return res.status(200).json({ message: `User ${deactivatedUser.email} successfully deactivated.` });
+  } catch (error) {
+    return res.status(500).json({ message: "Error deactivating user", error: error.message   });
+  }
+}
+
 exports.activateUser = async (req, res) => {
   try {
     const { id } = req.params;
