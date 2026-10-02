@@ -3,16 +3,44 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
+const superUser = async () =>{
+  try {
+    // Check if any super user exist
+    const superExist = await User.findOne({ role: 'superuser' })
+    
+    if(!superExist){
+      const hashedPassword = await bcrypt.hash(process.env.SUPERUSER_PASSWORD, 10);
+      const apiKey = crypto.randomBytes(24).toString("hex");
+
+      const superuser = new User({
+        name: 'Root Admin',
+        email: process.env.SUPERUSER_EMAIL,
+        password: hashedPassword,
+        role: 'superuser',
+        apiKey
+      })
+
+      await superuser.save();
+      console.log('Superuser created')
+    }
+    else{
+     console.log('Superuser already exist')
+    }
+  } catch (error) {
+   console.log(error)
+  }
+}
+
 const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
     // TODO: no validation of email format or password length
 
     // SECURITY: role comes from the request body, so anyone can register as admin; hard-code 'user' instead
-    if (!name || !email || !password || !role) {
+    if (!name || !email || !password ) {
       return res
         .status(400)
-        .json({ message: "Name, email,role and password are required" });
+        .json({ message: "All fields are required" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -86,4 +114,5 @@ const login = async (req, res) => {
 module.exports = {
   register,
   login,
+  superUser,
 };
