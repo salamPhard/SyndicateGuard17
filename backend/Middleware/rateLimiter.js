@@ -3,6 +3,23 @@ const RateLimit = require('../Models/RateLimit');
 const requestCounts = new Map();
 let requestsSinceCleanup = 0;
 
+const getUsageSnapshot = () => {
+	const now = Date.now();
+
+	return Array.from(requestCounts.entries())
+		.filter(([, usage]) => usage.resetAt > now)
+		.map(([key, usage]) => {
+			const [packageName, ...rest] = key.split(':');
+			return {
+				key,
+				packageName,
+				clientId: rest.join(':'),
+				count: usage.count,
+				resetAt: usage.resetAt,
+			};
+		});
+};
+
 const rateLimiter = async (req, res, next) => {
 	try {
 		const packageName = req.user?.package;
@@ -60,3 +77,5 @@ const rateLimiter = async (req, res, next) => {
 };
 
 module.exports = rateLimiter;
+module.exports.requestCounts = requestCounts;
+module.exports.getUsageSnapshot = getUsageSnapshot;

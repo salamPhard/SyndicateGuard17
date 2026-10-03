@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 
 const userRoute = require("./Routes/userRoute");
 
@@ -11,6 +12,7 @@ const dotenv = require("dotenv");
 
 dotenv.config(); //Load env variables
 
+app.use(cors());
 app.use(express.json()); //middleware to parse json
 
 const PORT = process.env.PORT || 5000;
@@ -26,6 +28,8 @@ app.use("/api/users", userRoute);
 
 //Admin route
 app.use("/api/admin", require("./Routes/adminRoute"));
+app.use("/api/rate-limits", require("./Routes/rateLimitRoute"));
+app.use("/api/usage", require("./Routes/usageRoute"));
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
