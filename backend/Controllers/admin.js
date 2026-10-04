@@ -37,6 +37,63 @@ exports.loginSuperuser = async (req, res) => {
   return res.status(200).json({ message: "Superuser login successful.", token });
 };
 
+//Upgrade User
+exports.upgradeUser = async (req, res) => {
+  const { id } = req.params;
+
+  if (!id){
+    return res.status(400).json({ message: 'User ID required' });
+  }
+
+  try {
+    //Find user and update role to admin
+    const updatedUser = await User.findByIdAndUpdate(id, {role: 'admin'}, {new: true, runValidators: true}).select('-password');
+
+    if(!updatedUser){
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    return res.status(200).json({ message: `User ${updatedUser.email} successfully upgraded to admin.` });
+
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to upgrade user' })
+  }
+}
+
+//Downgrade User
+ exports.downgradeUser = async (req, res) => {
+    try {
+      const {id} = req.params;
+
+    
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      //Check if they are already a regular user
+      if (user.role === 'user') {
+        return res.status(400).json({ message: "User is already downgraded to standard user status." });
+      }
+
+      //Update the role to 'user'
+      user.role = 'user';
+      await user.save();
+
+      return res.status(200).json({
+        message: `Successfully downgraded ${user.name} to a regular user.`,
+        user: {
+          id: user._id,
+          name: user.name,
+          role: user.role
+        }
+      });
+
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+
 // Get all users
 exports.getAllUsers = async (req, res) => {
   try {
@@ -186,6 +243,21 @@ exports.deleteUser = async (req, res) => {
     return res.status(500).json({ message: "Unable to deactivate user.", error: error.message });
   }
 };
+
+exports.deactivateUser = async (req, res) => {
+  try {
+    const {id} = req.params;
+    if(!id) {
+      return res.status(400).json({ message: "You need to enter user id" });
+    }
+
+    //find user and update isactive to false
+    const deactivatedUser = await User.findByIdAndUpdate(id, {isactive: false}, {new: true, runValidators: true}).select('-password');
+    return res.status(200).json({ message: `User ${deactivatedUser.email} successfully deactivated.` });
+  } catch (error) {
+    return res.status(500).json({ message: "Error deactivating user", error: error.message   });
+  }
+}
 
 exports.activateUser = async (req, res) => {
   try {
