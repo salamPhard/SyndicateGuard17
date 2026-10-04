@@ -137,6 +137,8 @@ Example:
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret
+SUPERUSER_EMAIL=your_superuser_email
+SUPERUSER_PASSWORD=your_superuser_password
 RESEND_API_KEY=your_resend_api_key
 
 Never commit your .env file to GitHub.
@@ -181,6 +183,13 @@ VITE_API_URL=http://localhost:5000
 
 Do not commit the actual .env file.
 
+👤 USER DASHBOARD
+
+After logging in, select Continue in the login information dialog to open the user dashboard. Users can view their current package, submit Pro or Enterprise upgrade requests for admin approval, and update their contact details. Administrators can review pending requests from the Admin control center.
+
+The admin dashboard lists active and deactivated accounts, lets admins create regular user accounts, deactivate/reactivate accounts, assign Pro or Enterprise packages, and see per-user daily API request usage. Authenticated user profile and upgrade-request API calls count toward each user's daily allowance: Free users get 5 requests, Pro users get 50, and Enterprise users are unlimited. Usage is stored per user and resets at midnight UTC. Admin endpoints are not counted against user allowances. Admin-created accounts receive the selected package; public registration always creates a regular Free account. Admin accounts must be provisioned separately.
+
+To sign in to the admin dashboard, use the credentials configured by `SUPERUSER_EMAIL` and `SUPERUSER_PASSWORD` in `backend/.env`. These are checked by the backend and must never be added to frontend environment variables or committed to source control.
 
 ################################################
 🔐 Environment Variables
@@ -195,6 +204,8 @@ Example:
 PORT=5000
 MONGO_URI=
 JWT_SECRET=
+SUPERUSER_EMAIL=
+SUPERUSER_PASSWORD=
 RESEND_API_KEY=   #This is for the email stufff
 Frontend
 frontend/.env

@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      // BUG: password has no select:false, so the bcrypt hash is returned in every response
+      select: false,
     },
 
     apiKey: {
@@ -30,8 +30,69 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      required: true,
-      enum: ["admin", "user"],
+      enum: ["admin", "user", 'superuser'],
+      default: 'user'
+    },
+
+    package: {
+    type: String,
+    enum: ['free', 'pro', 'enterprise'],
+    default: 'free'
+},
+
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+
+    address: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+
+    upgradeRequests: [
+      {
+        requestedPackage: {
+          type: String,
+          enum: ['pro', 'enterprise'],
+          required: true,
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'approved', 'declined'],
+          default: 'pending',
+        },
+        requestedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        reviewedAt: {
+          type: Date,
+          default: null,
+        },
+      },
+    ],
+
+    loginCountDate: {
+      type: String,
+      default: null,
+    },
+
+    loginCountToday: {
+      type: Number,
+      default: 0,
+    },
+
+    apiRequestCountDate: {
+      type: String,
+      default: null,
+    },
+
+    apiRequestCountToday: {
+      type: Number,
+      default: 0,
     },
 
     isactive: {
@@ -45,9 +106,5 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-// BUG: this hook hides deactivated users from ALL find queries (admin can't see them, re-registration crashes on duplicate email)
-userSchema.pre(/^find/, async function () {
-  this.find({ isactive: true });
-});
 
 module.exports = mongoose.model("User", userSchema);

@@ -29,10 +29,7 @@ function UserAccountPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...form,
-          role: 'user',
-        }),
+        body: JSON.stringify(form),
       })
 
       const data = await response.json().catch(() => ({}))
@@ -41,7 +38,7 @@ function UserAccountPage() {
         throw new Error(data.message || 'Unable to create the account.')
       }
 
-      setMessage('Account created successfully. You can now log in to your user account.')
+      setMessage('Account created successfully. You can now log in to your account.')
       setForm({ name: '', email: '', password: '' })
     } catch (submitError) {
       setError(submitError.message)

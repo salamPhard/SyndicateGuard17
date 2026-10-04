@@ -3,6 +3,7 @@ import './App.css'
 import HomePage from './pages/HomePage'
 import UserAccountPage from './pages/UserAccountPage'
 import UserLoginPage from './pages/UserLoginPage'
+import UserDashboardPage from './pages/UserDashboardPage'
 import AdminPage from './pages/AdminPage'
 import AdminRateLimitsPage from './pages/AdminRateLimitsPage'
 
@@ -18,6 +19,7 @@ function App() {
               <div className="user-menu-options">
                 <Link to="/user-login">Login</Link>
                 <Link to="/user-account">Register</Link>
+                <Link to="/user-dashboard">Dashboard</Link>
               </div>
             </details>
             <Link to="/admin">Admin</Link>
@@ -28,6 +30,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/user-account" element={<UserAccountPage />} />
           <Route path="/user-login" element={<UserLoginPage />} />
+          <Route path="/user-dashboard" element={<UserDashboardPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/admin/rate-limits" element={<AdminRateLimitsPage />} />
         </Routes>
