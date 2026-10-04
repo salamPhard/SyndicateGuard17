@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
@@ -19,75 +19,98 @@ function AdminRateLimitsPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  const buildHeaders = (customHeaders = {}, activeToken = token) => ({
-    'Content-Type': 'application/json',
-    ...customHeaders,
-    ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
-  })
+  const buildHeaders = useCallback(
+    (customHeaders = {}, activeToken = token) => ({
+      'Content-Type': 'application/json',
+      ...customHeaders,
+      ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
+    }),
+    [token]
+  )
 
-  const fetchRateLimits = async (activeToken = token) => {
-    if (!activeToken) {
-      return
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/api/rate-limits`, {
-        headers: buildHeaders({}, activeToken),
-      })
-
-      const data = await response.json().catch(() => [])
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Unable to fetch rate limits.')
+  const fetchRateLimits = useCallback(
+    async (activeToken = token) => {
+      if (!activeToken) {
+        return
       }
 
-      setRateLimits(Array.isArray(data) ? data : [])
-    } catch (loadError) {
-      setError(loadError.message)
-    }
-  }
+      try {
+        const response = await fetch(`${API_URL}/api/rate-limits`, {
+          headers: buildHeaders({}, activeToken),
+        })
 
-  const fetchUsageSummary = async (activeToken = token) => {
-    if (!activeToken) {
-      return
-    }
+        const data = await response.json().catch(() => [])
 
-    try {
-      const response = await fetch(`${API_URL}/api/usage`, {
-        headers: buildHeaders({}, activeToken),
-      })
+        if (!response.ok) {
+          throw new Error(data.message || 'Unable to fetch rate limits.')
+        }
 
-      const data = await response.json().catch(() => ({ packages: [], activeUsage: [], totalActiveClients: 0 }))
+        setRateLimits(Array.isArray(data) ? data : [])
+      } catch (loadError) {
+        setError(loadError.message)
+      }
+    },
+    [buildHeaders, token]
+  )
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Unable to fetch usage summary.')
+  const fetchUsageSummary = useCallback(
+    async (activeToken = token) => {
+      if (!activeToken) {
+        return
       }
 
-      setUsageSummary({
-        packages: Array.isArray(data.packages) ? data.packages : [],
-        activeUsage: Array.isArray(data.activeUsage) ? data.activeUsage : [],
-        totalActiveClients: Number(data.totalActiveClients || 0),
-      })
-    } catch (loadError) {
-      setError(loadError.message)
-    }
-  }
+      try {
+        const response = await fetch(`${API_URL}/api/usage`, {
+          headers: buildHeaders({}, activeToken),
+        })
+
+        const data = await response.json().catch(() => ({ packages: [], activeUsage: [], totalActiveClients: 0 }))
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Unable to fetch usage summary.')
+        }
+
+        setUsageSummary({
+          packages: Array.isArray(data.packages) ? data.packages : [],
+          activeUsage: Array.isArray(data.activeUsage) ? data.activeUsage : [],
+          totalActiveClients: Number(data.totalActiveClients || 0),
+        })
+      } catch (loadError) {
+        setError(loadError.message)
+      }
+    },
+    [buildHeaders, token]
+  )
 
   useEffect(() => {
     if (!token) {
       localStorage.removeItem('syndicate-admin-token')
-      setRateLimits([])
-      setUsageSummary({ packages: [], activeUsage: [], totalActiveClients: 0 })
       return
     }
 
     localStorage.setItem('syndicate-admin-token', token)
-    setLoading(true)
-    setError('')
 
-    Promise.all([fetchRateLimits(token), fetchUsageSummary(token)])
-      .finally(() => setLoading(false))
-  }, [token])
+    let isMounted = true
+
+    const loadData = async () => {
+      setLoading(true)
+      setError('')
+
+      try {
+        await Promise.all([fetchRateLimits(token), fetchUsageSummary(token)])
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [token, fetchRateLimits, fetchUsageSummary])
 
   const handleFormChange = (event) => {
     const { name, value } = event.target

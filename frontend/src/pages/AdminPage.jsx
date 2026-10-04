@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
@@ -17,13 +17,16 @@ function AdminPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  const buildHeaders = (customHeaders = {}, activeToken = token) => ({
-    'Content-Type': 'application/json',
-    ...customHeaders,
-    ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
-  })
+  const buildHeaders = useCallback(
+    (customHeaders = {}, activeToken = token) => ({
+      'Content-Type': 'application/json',
+      ...customHeaders,
+      ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
+    }),
+    [token]
+  )
 
-  const fetchAdminData = async (authToken) => {
+  const fetchAdminData = useCallback(async (authToken) => {
     if (!authToken) {
       return
     }
@@ -59,18 +62,18 @@ function AdminPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [buildHeaders])
 
   useEffect(() => {
     if (!token) {
-      setUserList([])
-      setRateLimits([])
+      localStorage.removeItem('syndicate-admin-token')
       return
     }
 
     localStorage.setItem('syndicate-admin-token', token)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAdminData(token)
-  }, [token])
+  }, [fetchAdminData, token])
 
   const handleLoginChange = (event) => {
     const { name, value } = event.target
