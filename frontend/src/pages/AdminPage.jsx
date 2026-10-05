@@ -21,6 +21,12 @@ const packageRequestLimits = [
   { package: 'Enterprise', allowance: 'Unlimited requests' },
 ]
 
+const readResponseData = async (response) => response.json().catch(() => ({}))
+
+const getResponseError = (data, response, fallback) => (
+  data.message || data.error || `${fallback} (HTTP ${response.status}).`
+)
+
 function AdminPage() {
   const [loginForm, setLoginForm] = useState(defaultLogin)
   const [newUser, setNewUser] = useState(defaultNewUser)
@@ -32,6 +38,17 @@ function AdminPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  const clearAdminSession = useCallback((status) => {
+    setToken('')
+    setUserList([])
+    setUpgradeRequests([])
+    setError(
+      status === 401
+        ? 'Your admin session has expired. Sign in again.'
+        : 'Your account is not authorized to access the admin dashboard. Sign in with superuser credentials.'
+    )
+  }, [])
 
   const buildHeaders = useCallback(
     (customHeaders = {}, activeToken = token) => ({
@@ -60,25 +77,38 @@ function AdminPage() {
         }),
       ])
 
-      const usersData = await usersResponse.json().catch(() => ({}) )
-      const upgradeRequestsData = await upgradeRequestsResponse.json().catch(() => ({}))
+      const usersData = await readResponseData(usersResponse)
+      const upgradeRequestsData = await readResponseData(upgradeRequestsResponse)
 
+      if (usersResponse.status === 401 || usersResponse.status === 403) {
+        clearAdminSession(usersResponse.status)
+        return
+      }
       if (!usersResponse.ok) {
-        throw new Error(usersData.message || 'Unable to load users.')
+        throw new Error(getResponseError(usersData, usersResponse, 'Unable to load users.'))
+      }
+
+      if (upgradeRequestsResponse.status === 401 || upgradeRequestsResponse.status === 403) {
+        clearAdminSession(upgradeRequestsResponse.status)
+        return
       }
 
       if (!upgradeRequestsResponse.ok) {
-        throw new Error(upgradeRequestsData.message || 'Unable to load upgrade requests.')
+        throw new Error(getResponseError(upgradeRequestsData, upgradeRequestsResponse, 'Unable to load upgrade requests.'))
       }
 
-      setUserList(Array.isArray(usersData) ? usersData : usersData.users || usersData.user || [])
+      const users = Array.isArray(usersData) ? usersData : usersData.users || usersData.user
+      if (!Array.isArray(users)) {
+        throw new Error('The server returned an invalid user list.')
+      }
+      setUserList(users)
       setUpgradeRequests(Array.isArray(upgradeRequestsData.requests) ? upgradeRequestsData.requests : [])
     } catch (loadError) {
       setError(loadError.message)
     } finally {
       setLoading(false)
     }
-  }, [buildHeaders])
+  }, [buildHeaders, clearAdminSession])
 
   const refreshAdminLiveData = useCallback(async () => {
     if (!token) return
@@ -89,22 +119,36 @@ function AdminPage() {
         fetch(`${API_URL}/api/admin/allClients`, { headers: buildHeaders() }),
         fetch(`${API_URL}/api/admin/upgrade-requests`, { headers: buildHeaders() }),
       ])
-      const usersData = await usersResponse.json().catch(() => ({}))
-      const requestsData = await requestsResponse.json().catch(() => ({}))
+      const usersData = await readResponseData(usersResponse)
+      const requestsData = await readResponseData(requestsResponse)
+
+      if (usersResponse.status === 401 || usersResponse.status === 403) {
+        clearAdminSession(usersResponse.status)
+        return
+      }
       if (!usersResponse.ok) {
-        throw new Error(usersData.message || 'Unable to refresh users.')
+        throw new Error(getResponseError(usersData, usersResponse, 'Unable to refresh users.'))
+      }
+
+      if (requestsResponse.status === 401 || requestsResponse.status === 403) {
+        clearAdminSession(requestsResponse.status)
+        return
       }
       if (!requestsResponse.ok) {
-        throw new Error(requestsData.message || 'Unable to refresh upgrade requests.')
+        throw new Error(getResponseError(requestsData, requestsResponse, 'Unable to refresh upgrade requests.'))
       }
-      setUserList(Array.isArray(usersData) ? usersData : usersData.users || usersData.user || [])
+      const users = Array.isArray(usersData) ? usersData : usersData.users || usersData.user
+      if (!Array.isArray(users)) {
+        throw new Error('The server returned an invalid user list.')
+      }
+      setUserList(users)
       setUpgradeRequests(Array.isArray(requestsData.requests) ? requestsData.requests : [])
     } catch (refreshError) {
       setError(refreshError.message)
     } finally {
       setRefreshingRequests(false)
     }
-  }, [buildHeaders, token])
+  }, [buildHeaders, clearAdminSession, token])
 
   useEffect(() => {
     if (!token) return undefined
