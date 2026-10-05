@@ -1,36 +1,45 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
+const dotenv = require("dotenv");
+
+dotenv.config(); // Load env variables first
 
 const userRoute = require("./Routes/userRoute");
-
-const path = require("path");
+const connectDB = require("./Config/dbConfig");
+const { superUser } = require("./Controllers/users");
 
 const app = express();
 
-// NOTE: dotenv.config() should run first, before other files are imported
-const dotenv = require("dotenv");
-
-dotenv.config(); //Load env variables
-
 app.use(cors());
-app.use(express.json()); //middleware to parse json
+app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-// BUG: connectDB() isn't awaited, so the server starts listening before MongoDB connects
-const connectDB = require("./Config/dbConfig");
-connectDB(); //connect to MongoDB
-
-// NOTE: leftover static route; the uploads folder doesn't exist
+// Static uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/users", userRoute);
 
-//Admin route
+// Admin route
 app.use("/api/admin", require("./Routes/adminRoute"));
 app.use("/api/rate-limits", require("./Routes/rateLimitRoute"));
 app.use("/api/usage", require("./Routes/usageRoute"));
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Start application
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    await superUser();
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();

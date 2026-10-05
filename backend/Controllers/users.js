@@ -3,6 +3,45 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
+
+const superUser = async () => {
+  try {
+    const superExist = await User.findOne({ role: "superuser" });
+
+    if (superExist) {
+      console.log("Superuser already exists");
+      return;
+    }
+
+    if (!process.env.SUPERUSER_EMAIL || !process.env.SUPERUSER_PASSWORD) {
+      console.log("SUPERUSER_EMAIL or SUPERUSER_PASSWORD is missing");
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(
+      process.env.SUPERUSER_PASSWORD,
+      10
+    );
+
+    const apiKey = crypto.randomBytes(24).toString("hex");
+
+    const superuser = new User({
+      name: "Root Admin",
+      email: process.env.SUPERUSER_EMAIL,
+      password: hashedPassword,
+      role: "superuser",
+      package: "enterprise",
+      apiKey,
+    });
+
+    await superuser.save();
+
+    console.log("Superuser created");
+  } catch (error) {
+    console.log("Error creating superuser:", error.message);
+  }
+};
+
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -252,4 +291,5 @@ module.exports = {
   getProfile,
   updateProfile,
   requestPackageUpgrade,
+  superUser,
 };
