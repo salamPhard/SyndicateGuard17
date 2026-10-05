@@ -18,7 +18,17 @@ git clone https://github.com/salamPhard/SyndicateGuard17.git
 
 Then enter the project:
 
-cd rate-limiting-service
+cd SyndicateGuard17
+
+Before making changes, create a working branch from the latest `main` branch. Do not commit directly to `main`:
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/describe-your-change
+```
+
+Replace `feature/describe-your-change` with a short, descriptive branch name.
 
 ###############################################
 
@@ -151,35 +161,51 @@ The actual .env file is ignored by .gitignore.
 
 Development mode:
 
+```bash
 npm run dev
+```
 
-Or, depending on the scripts configured in package.json:
-
-npm start
-
-The backend will normally be available at:
-
-http://localhost:5000
-
-#######################################
+The backend will normally be available at `http://localhost:5000`. Keep this terminal open while developing.
 
 🎨 FRONTEND SETUP
 
 Open another terminal and go to the frontend directory:
 
+```bash
 cd frontend
-
-Install dependencies:
-
 npm install
+```
 
 Create:
 
 frontend/.env
 
-Example:
+Set the API URL to the backend address:
 
+```env
 VITE_API_URL=http://localhost:5000
+```
+
+Start the frontend from the `frontend` directory in a separate terminal:
+
+```bash
+npm run dev
+```
+
+Open the local URL printed by Vite, usually `http://localhost:5173`.
+
+## Required developer setup for the expected result
+
+Follow every step below. Skipping configuration or running only one part of the project can prevent the application from working as expected.
+
+1. Install a supported Node.js version and make sure MongoDB is available, either locally or through a MongoDB service.
+2. In `backend`, run `npm install`. Copy `.env.example` to `.env` and set a reachable `MONGO_URI`, a private `JWT_SECRET`, and the superuser credentials `SUPERUSER_EMAIL` and `SUPERUSER_PASSWORD`. Do not use real production credentials in local development.
+3. In `frontend`, run `npm install` and set `VITE_API_URL` in `frontend/.env` to the backend URL. The frontend URL and backend URL must match the addresses where the two services are running.
+4. Start the backend with `npm run dev` from `backend`, then start the frontend with `npm run dev` from `frontend`. Keep both terminals running.
+5. Open the Vite URL in a browser. Register a regular account to test user features, or sign in at `/admin` using the superuser credentials from `backend/.env`.
+6. Before submitting code changes, run `npm run lint` and `npm run build` from `frontend`, and verify the feature manually in the browser. Push your feature branch and open a pull request into `main`.
+
+When setup is correct, the browser should load the React application, user registration and login should communicate with the backend, and the dashboards should load data from MongoDB. Admin login requires the configured superuser credentials. Never commit `.env` files, credentials, database connection strings, or tokens.
 
 Do not commit the actual .env file.
 
@@ -266,7 +292,7 @@ Example:
 
 git clone https://github.com/salamPhard/SyndicateGuard17.git
 
-cd rate-limiting-service
+cd SyndicateGuard17
 
 git checkout main
 
