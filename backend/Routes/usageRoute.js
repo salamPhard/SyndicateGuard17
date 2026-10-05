@@ -8,9 +8,9 @@ const {
 const { protect } = require('../Middleware/auth');
 const { authRoles } = require('../Middleware/roles');
 
-const adminOnly = [protect, authRoles('admin')];
+const adminAndSuperuser = [protect, authRoles('admin','superuser')];
 
-router.get('/', ...adminOnly, getUsageSummary);
-router.delete('/clear', ...adminOnly, clearUsageSummary);
+router.get('/', ...adminAndSuperuser, getUsageSummary);
+router.delete('/clear', ...adminAndSuperuser, clearUsageSummary);
 
 module.exports = router;

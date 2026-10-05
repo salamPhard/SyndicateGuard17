@@ -12,12 +12,12 @@ const {
 const { protect } = require('../Middleware/auth');
 const { authRoles } = require('../Middleware/roles');
 
-const adminOnly = [protect, authRoles('admin')];
+const adminAndSuperuser = [protect, authRoles('admin', 'superuser')];
 
 
 
-router.post('/', ...adminOnly, createRateLimitPackage);
-router.get('/', ...adminOnly, getRateLimitPackages);
+router.post('/', ...adminAndSuperuser, createRateLimitPackage);
+router.get('/', ...adminAndSuperuser, getRateLimitPackages);
 
 //Test rate limit 
 router.get('/test', protect, rateLimiter, (req, res) => {
@@ -25,8 +25,8 @@ router.get('/test', protect, rateLimiter, (req, res) => {
         message: 'Request successful'
     });
 });
-router.get('/:packageName', ...adminOnly, getRateLimitPackageByName);
-router.patch('/:packageName', ...adminOnly, updateRateLimitPackage);
-router.delete('/:packageName', ...adminOnly, deleteRateLimitPackage);
+router.get('/:packageName', ...adminAndSuperuser, getRateLimitPackageByName);
+router.patch('/:packageName', ...adminAndSuperuser, updateRateLimitPackage);
+router.delete('/:packageName', ...adminAndSuperuser, deleteRateLimitPackage);
 
 module.exports = router;
