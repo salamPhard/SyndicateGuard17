@@ -217,6 +217,17 @@ The admin dashboard lists active and deactivated accounts, lets admins create re
 
 To sign in to the admin dashboard, use the credentials configured by `SUPERUSER_EMAIL` and `SUPERUSER_PASSWORD` in `backend/.env`. These are checked by the backend and must never be added to frontend environment variables or committed to source control.
 
+### Admin dashboard data and session troubleshooting
+
+After signing in, the dashboard loads user accounts and package-upgrade requests from the backend. It refreshes this data periodically, and the **Refresh requests** button can be used to request the latest users and upgrade requests immediately. The user table includes each account's package, active status, and API request usage for the current UTC day.
+
+If the dashboard says it cannot load users or upgrade requests:
+
+1. Confirm that the backend is running and connected to the MongoDB database configured by `MONGO_URI`.
+2. Confirm that `VITE_API_URL` in `frontend/.env` points to that backend, then restart the frontend if the environment file changed.
+3. If the admin session has expired or the saved token is invalid, the dashboard clears that session and returns to the superuser sign-in form. Sign in again with the `SUPERUSER_EMAIL` and `SUPERUSER_PASSWORD` configured in `backend/.env`.
+4. If access is denied after signing in, verify that the backend is running the expected version and that the superuser environment variables and `JWT_SECRET` are configured correctly. Never put these credentials in frontend configuration.
+
 ################################################
 🔐 Environment Variables
 
