@@ -25,7 +25,7 @@ const rateLimiter = async (req, res, next) => {
 	try {
 		const packageName = req.user?.package;
 		// Use the authenticated user's ID to track requests; fall back to the IP address when unavailable.
-		const clientId = req.user?._id?.toString() || req.ip;
+		const clientId = req.user?.id?.toString() || req.ip;
 
 		if (!packageName || !clientId) {
 			return res.status(401).json({ message: 'An authenticated user and package are required.' });
